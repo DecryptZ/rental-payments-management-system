@@ -12,10 +12,12 @@ WORKDIR /var/www/html
 # Copy the Laravel app files to the container
 COPY . /var/www/html
 
-# Set permissions for Laravel storage and cache
+# Set permissions for Laravel storage and cache and public directory
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage && \
-    chmod -R 775 /var/www/html/bootstrap/cache
+    chmod -R 775 /var/www/html/bootstrap/cache && \
+    chmod -R 755 /var/www/html/public && \
+    chown -R www-data:www-data /var/www/html/public
 
 # Enable Apache mod_rewrite for Laravel's routing
 RUN a2enmod rewrite
@@ -23,8 +25,9 @@ RUN a2enmod rewrite
 # Set a ServerName to avoid warnings
 RUN echo "ServerName rental-payments-management-system.onrender.com" >> /etc/apache2/apache2.conf
 
-# Configure Apache to use the Laravel public directory and set DirectoryIndex
-RUN echo '<VirtualHost *:${PORT}>' > /etc/apache2/sites-available/000-default.conf && \
+# Configure Apache to use the dynamically assigned Render port and set DocumentRoot to /public
+RUN echo 'Listen ${PORT}' >> /etc/apache2/ports.conf && \
+    echo '<VirtualHost *:${PORT}>' > /etc/apache2/sites-available/000-default.conf && \
     echo '    ServerName rental-payments-management-system.onrender.com' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    DocumentRoot /var/www/html/public' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    <Directory /var/www/html/public>' >> /etc/apache2/sites-available/000-default.conf && \
@@ -39,6 +42,9 @@ RUN a2ensite 000-default.conf
 
 # Expose the dynamic port provided by Render
 EXPOSE ${PORT}
+
+# Restart Apache to apply changes
+RUN apache2ctl restart
 
 # Start the Apache service in the foreground
 CMD ["apache2-foreground"]
