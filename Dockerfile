@@ -2,15 +2,21 @@
 FROM php:8.1-apache
 
 # Install necessary PHP extensions and utilities
-RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev git unzip && \
+RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev git unzip curl && \
     docker-php-ext-configure gd --with-freetype --with-jpeg && \
     docker-php-ext-install gd pdo pdo_mysql
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Set the working directory to /var/www/html
 WORKDIR /var/www/html
 
 # Copy the Laravel app files to the container
 COPY . /var/www/html
+
+# Install Laravel dependencies using Composer
+RUN composer install --no-dev --optimize-autoloader
 
 # Set permissions for Laravel storage and cache and public directory
 RUN chown -R www-data:www-data /var/www/html && \
