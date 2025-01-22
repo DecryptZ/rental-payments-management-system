@@ -1,47 +1,37 @@
 # Use the official PHP image with Apache
-FROM php:8.1-apache
+FROM php:8.0-apache
 
-# Install system dependencies and PHP extensions
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    zip \
-    git \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql
+# Install necessary PHP extensions and dependencies
+RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zip git unzip && \
+    docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install gd pdo pdo_mysql && \
+    a2enmod rewrite
 
-# Enable Apache rewrite module
-RUN a2enmod rewrite
-
-# Set the working directory
+# Set the working directory in the container
 WORKDIR /var/www/html
 
-# Copy the composer.json and composer.lock to install PHP dependencies
-COPY composer.json composer.lock ./
+# Copy the application files into the container
+COPY . /var/www/html
 
-# Install Composer
+# Set the proper file permissions
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 /var/www/html && \
+    chmod 644 /var/www/html/app/Helpers/responder.php
+
+# Install Composer globally
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install PHP dependencies
+# Install PHP dependencies using Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy the rest of the application code
-COPY . .
+# Install NPM dependencies (if any)
+RUN npm install
 
-# Install Node.js and NPM dependencies for the front-end (if applicable)
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install
+# Clear Laravel configuration and cache
+RUN php artisan config:clear && php artisan cache:clear
 
-# Set up Apache document root to the public directory
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-
-# Expose port 80
+# Expose the port Apache is listening on
 EXPOSE 80
 
-# Run Laravel migrations (optional, you can also do this manually after deployment)
-# RUN php artisan migrate --force
-
-# Start Apache server
+# Start Apache in the foreground
 CMD ["apache2-foreground"]
