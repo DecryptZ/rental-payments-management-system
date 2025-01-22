@@ -19,23 +19,23 @@ WORKDIR /var/www/html
 # Install PHP dependencies via Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Set the correct permissions
+# Set the correct permissions for storage and cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Update Apache configuration
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 
-# Create a custom Apache config to handle Laravel's public directory
+# Create a custom Apache config to handle Laravel's public directory and assets
 RUN echo '<VirtualHost *:80>' > /etc/apache2/sites-available/000-default.conf && \
     echo '    DocumentRoot /var/www/html/public' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    <Directory /var/www/html/public>' >> /etc/apache2/sites-available/000-default.conf && \
     echo '        AllowOverride All' >> /etc/apache2/sites-available/000-default.conf && \
     echo '        Require all granted' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    </Directory>' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '</VirtualHost>' >> /etc/apache2/sites-available/000-default.conf
-
-# Expose port 80
-EXPOSE 80
-
-# Start Apache in the foreground
-CMD ["apache2-foreground"]
+    echo '    Alias /css /var/www/html/public/css' >> /etc/apache2/sites-available/000-default.conf && \
+    echo '    <Directory /var/www/html/public/css>' >> /etc/apache2/sites-available/000-default.conf && \
+    echo '        Options Indexes FollowSymLinks' >> /etc/apache2/sites-available/000-default.conf && \
+    echo '        AllowOverride All' >> /etc/apache2/sites-available/000-default.conf && \
+    echo '        Require all granted' >> /etc/apache2/sites-available/000-default.conf && \
+    echo '    </Directory>' >> /etc/apache2/sites-available/000-default.conf && \
+    echo '    Alias /js /var/www/html/pub
