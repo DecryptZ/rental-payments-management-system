@@ -23,13 +23,14 @@ RUN a2enmod rewrite
 # Set a ServerName to avoid warnings
 RUN echo "ServerName rental-payments-management-system.onrender.com" >> /etc/apache2/apache2.conf
 
-# Configure Apache to use the dynamically assigned Render port
+# Configure Apache to use the Laravel public directory and set DirectoryIndex
 RUN echo '<VirtualHost *:${PORT}>' > /etc/apache2/sites-available/000-default.conf && \
     echo '    ServerName rental-payments-management-system.onrender.com' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    DocumentRoot /var/www/html/public' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    <Directory /var/www/html/public>' >> /etc/apache2/sites-available/000-default.conf && \
     echo '        AllowOverride All' >> /etc/apache2/sites-available/000-default.conf && \
     echo '        Require all granted' >> /etc/apache2/sites-available/000-default.conf && \
+    echo '        DirectoryIndex index.php index.html' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    </Directory>' >> /etc/apache2/sites-available/000-default.conf && \
     echo '</VirtualHost>' >> /etc/apache2/sites-available/000-default.conf
 
