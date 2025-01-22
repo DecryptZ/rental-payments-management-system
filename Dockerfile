@@ -15,8 +15,14 @@ WORKDIR /var/www/html
 # Copy the Laravel app files to the container
 COPY . /var/www/html
 
+# Copy the environment file
+COPY .env /var/www/html/.env
+
 # Install Laravel dependencies using Composer
 RUN composer install --no-dev --optimize-autoloader
+
+# Set Laravel application key
+RUN php artisan key:generate
 
 # Set permissions for Laravel storage and cache and public directory
 RUN chown -R www-data:www-data /var/www/html && \
@@ -24,6 +30,13 @@ RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/bootstrap/cache && \
     chmod -R 755 /var/www/html/public && \
     chown -R www-data:www-data /var/www/html/public
+
+# Clear and cache Laravel configuration and routes
+RUN php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear && \
+    php artisan config:cache && \
+    php artisan route:cache
 
 # Enable Apache mod_rewrite for Laravel's routing
 RUN a2enmod rewrite
@@ -45,7 +58,7 @@ RUN echo '<VirtualHost *:80>' > /etc/apache2/sites-available/000-default.conf &&
 # Enable the site
 RUN a2ensite 000-default.conf
 
-# Expose the dynamic port provided by Render
+# Expose port 80
 EXPOSE 80
 
 # Start the Apache service in the foreground
