@@ -36,6 +36,10 @@ RUN npm install
 # Clear Laravel configuration and cache
 RUN php artisan config:clear && php artisan cache:clear
 
+# Apache configuration to fix DirectoryIndex and ServerName
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
+    echo "DirectoryIndex index.php index.html" >> /etc/apache2/apache2.conf
+
 # Expose the port Apache is listening on
 EXPOSE 80
 
