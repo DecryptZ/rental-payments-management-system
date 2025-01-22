@@ -2,10 +2,16 @@
 FROM php:8.0-apache
 
 # Install necessary PHP extensions and dependencies
-RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zip git unzip && \
-    docker-php-ext-configure gd --with-freetype --with-jpeg && \
-    docker-php-ext-install gd pdo pdo_mysql && \
-    a2enmod rewrite
+RUN apt-get update && apt-get install -y \
+    libpng-dev libjpeg-dev libfreetype6-dev zip git unzip \
+    curl gnupg2 lsb-release ca-certificates \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_mysql \
+    && a2enmod rewrite
+
+# Install Node.js and npm (for npm install)
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
+    && apt-get install -y nodejs
 
 # Set the working directory in the container
 WORKDIR /var/www/html
@@ -24,7 +30,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Install PHP dependencies using Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Install NPM dependencies (if any)
+# Install NPM dependencies (now that npm is available)
 RUN npm install
 
 # Clear Laravel configuration and cache
