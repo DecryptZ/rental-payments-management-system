@@ -1,14 +1,26 @@
 # Use the official PHP image with Apache
 FROM php:8.0-apache
 
+# Install dependencies (required for Composer and Laravel)
+RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zip git unzip
+
+# Install Composer (PHP package manager)
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Enable Apache mod_rewrite (important for Laravel)
 RUN a2enmod rewrite
 
 # Copy your application files into the container
 COPY . /var/www/html
 
-# Set the working directory to the public folder
-WORKDIR /var/www/html/public
+# Set the working directory to the application folder
+WORKDIR /var/www/html
+
+# Install PHP dependencies via Composer
+RUN composer install --no-dev --optimize-autoloader
+
+# Set the correct permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Update Apache configuration
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
