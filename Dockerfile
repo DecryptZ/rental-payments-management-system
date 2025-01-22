@@ -20,36 +20,24 @@ RUN chown -R www-data:www-data /var/www/html && \
 # Enable Apache mod_rewrite for Laravel's routing
 RUN a2enmod rewrite
 
-# Set a ServerName to avoid the warning
+# Set a ServerName to avoid warnings
 RUN echo "ServerName rental-payments-management-system.onrender.com" >> /etc/apache2/apache2.conf
 
-# Configure Apache to handle Laravel's public directory and assets
-RUN echo '<VirtualHost *:80>' > /etc/apache2/sites-available/000-default.conf && \
+# Configure Apache to use the dynamically assigned Render port
+RUN echo '<VirtualHost *:${PORT}>' > /etc/apache2/sites-available/000-default.conf && \
     echo '    ServerName rental-payments-management-system.onrender.com' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    DocumentRoot /var/www/html/public' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    <Directory /var/www/html/public>' >> /etc/apache2/sites-available/000-default.conf && \
     echo '        AllowOverride All' >> /etc/apache2/sites-available/000-default.conf && \
     echo '        Require all granted' >> /etc/apache2/sites-available/000-default.conf && \
     echo '    </Directory>' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '    Alias /css /var/www/html/public/css' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '    <Directory /var/www/html/public/css>' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '        Options Indexes FollowSymLinks' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '        AllowOverride All' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '        Require all granted' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '    </Directory>' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '    Alias /js /var/www/html/public/js' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '    <Directory /var/www/html/public/js>' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '        Options Indexes FollowSymLinks' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '        AllowOverride All' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '        Require all granted' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '    </Directory>' >> /etc/apache2/sites-available/000-default.conf && \
     echo '</VirtualHost>' >> /etc/apache2/sites-available/000-default.conf
 
-# Enable the site and restart Apache to apply changes
-RUN a2ensite 000-default.conf && service apache2 restart
+# Enable the site
+RUN a2ensite 000-default.conf
 
-# Expose port 80 for the Apache web server
-EXPOSE 80
+# Expose the dynamic port provided by Render
+EXPOSE ${PORT}
 
 # Start the Apache service in the foreground
 CMD ["apache2-foreground"]
